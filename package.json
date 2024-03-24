@@ -1,15 +1,19 @@
 {
   "name": "backend-project",
   "version": "1.0.0",
-  "description": "a project mainly focused on backend",
+  "description": "project mainly focused on backend",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
   },
   "keywords": [
     "js",
     "backend"
   ],
   "author": "Sharath Chandran K",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
 }
