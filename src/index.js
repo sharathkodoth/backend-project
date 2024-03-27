@@ -4,23 +4,21 @@ import express from "express";
 const app = express();
 
 dotenv.config({
-  path: "/.env",
+    path: "/.env",
 });
 
 connectDB().then(() => {
-  app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server is running at port :${process.env.PORT}`);
-  });
+    app.listen(process.env.PORT || 3000, () => {
+        console.log(`Server is running at port :${process.env.PORT}`);
+    });
 });
 
-app
-  .on("error", (err) => {
+app.on("error", (err) => {
     console.log("Error:", err);
     throw err;
-  })
-  .catch((err) => {
+}).catch((err) => {
     console.log("Database connection error:", err);
-  });
+});
 
 //another method below
 /*
