@@ -101,12 +101,13 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
+    // validate that username or email is provided
     const { username, email, password } = req.body;
-
     if (!username || !email) {
         throw new ApiError(400, "username or email is required");
     }
 
+    // find user by username or email
     const user = await User.findById({
         $or: [{ username }, { email }],
     });
@@ -121,9 +122,40 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(401, "incorrect password");
     }
 
+    // generate access token and refresh token
     const { accessToken, refreshToken } = generateAccessTokenAndRefreshToken(
         user._id
     );
+
+    // fetch logged-in user details without sensitive information
+    const loggedInUser = await User.findById(user._id).select(
+        "-password -refreshToken"
+    );
+
+    // set options for http-only and secure cookies
+    const options = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    // set access token and refresh token cookies in the response
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken,
+                },
+                "Login Successfull"
+            )
+        );
 });
+
+
 
 export { registerUser };
