@@ -108,8 +108,8 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     // find user by username or email
-    const user = await User.findById({
-        $or: [{ username }, { email }],
+    const user = await User.findOne({
+        $or: [{ username }, { email }]
     });
 
     if (!user) {
