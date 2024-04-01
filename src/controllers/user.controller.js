@@ -4,6 +4,21 @@ import { User } from "../models/user.model.js";
 import { uploadFileOnCloudinary } from "../services/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+const generateAccessTokenAndRefreshToken = async (userId) => {
+    try {
+        const user = await User.findById(userId);
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+
+        user.refreshToken = refreshToken;
+        user.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+    } catch (error) {
+        throw new ApiError(500, "error while generating access token");
+    }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
     // Destructure fields from request body
     const { username, fullName, email, password } = req.body;
@@ -83,6 +98,32 @@ const registerUser = asyncHandler(async (req, res) => {
                 "User has been registered successfully"
             )
         );
+});
+
+const loginUser = asyncHandler(async (req, res) => {
+    const { username, email, password } = req.body;
+
+    if (!username || !email) {
+        throw new ApiError(400, "username or email is required");
+    }
+
+    const user = await User.findById({
+        $or: [{ username }, { email }],
+    });
+
+    if (!user) {
+        throw new ApiError(404, "user not found, register user");
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+
+    if (!isPasswordValid) {
+        throw new ApiError(401, "incorrect password");
+    }
+
+    const { accessToken, refreshToken } = generateAccessTokenAndRefreshToken(
+        user._id
+    );
 });
 
 export { registerUser };
