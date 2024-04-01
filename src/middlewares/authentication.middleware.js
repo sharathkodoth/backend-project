@@ -7,7 +7,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
     try {
         // extract token from headers or cookies
         const token =
-            req.header("Authorization")?.replace(/^Bearer\s+/, "") ||
+            req.header("Authorization")?.replace("Bearer ", "") ||
             req.cookies?.accessToken;
 
         if (!token) {
@@ -21,8 +21,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
         // retrieve user, avoid unnecessary fields
-        const user = await User.findById(
-            decodedToken._id,
+        const user = await User.findById(decodedToken?._id).select(
             "-password -refreshToken"
         );
 
@@ -38,7 +37,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
 
         next();
     } catch (error) {
-        throw new ApiError(401,"Error in JWT verification: ", error)
+        throw new ApiError(401, "Error in JWT verification: ", error);
     }
 });
 
