@@ -142,6 +142,7 @@ const loginUser = asyncHandler(async (req, res) => {
     };
 
     // set access token and refresh token cookies in the response
+    console.log(accessToken, refreshToken);
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -154,23 +155,24 @@ const loginUser = asyncHandler(async (req, res) => {
                     accessToken,
                     refreshToken,
                 },
-                "Login Successfull"
+                "User logged In Successfully"
             )
         );
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-    await User.findByIdAndUpdate(
+    const sharath = await User.findByIdAndUpdate(
         req.user._id,
         {
-            $unset: {
-                refreshToken: 1, // this removes the field from document
+            $set: {
+                refreshToken: undefined, // this removes the field from document
             },
         },
         {
             new: true,
         }
     );
+    console.log(sharath);
 
     const options = {
         httpOnly: true,

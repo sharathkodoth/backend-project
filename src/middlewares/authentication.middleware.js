@@ -7,9 +7,9 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
     try {
         // extract token from headers or cookies
         const token =
-            req.header("Authorization")?.replace("Bearer ", "") ||
-            req.cookies?.accessToken;
-
+            req.cookies?.accessToken ||
+            req.header("Authorization")?.replace("Bearer ", "");
+        
         if (!token) {
             throw new ApiError(
                 401,
@@ -37,7 +37,10 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
 
         next();
     } catch (error) {
-        throw new ApiError(401, "Error in JWT verification: ", error);
+        throw new ApiError(
+            401,
+            error?.message || "Error in JWT verification: "
+        );
     }
 });
 
