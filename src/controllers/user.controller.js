@@ -5,7 +5,7 @@ import { uploadFileOnCloudinary } from "../services/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
-const generateAccessAndRefereshTokens = async (userId) => {
+const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
         const accessToken = user.generateAccessToken();
@@ -187,28 +187,32 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
+    // retrieve the refresh token from cookies or request body
     const incomingClientRefreshToken =
         req.cookies.refreshToken || req.body.refreshToken;
 
     if (!incomingClientRefreshToken) {
         throw new ApiError(
             401,
-            "Invalid refresh token: Either expired or does not match user's token"
+            "Unauthorized request: Refresh token is missing"
         );
     }
 
     try {
+        // verify the incoming refresh token with secret
         const decodedRefreshToken = jwt.verify(
             incomingClientRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         );
 
+        // find the user associated with the refresh token
         const foundUser = await User.findById(decodedRefreshToken?._id);
 
         if (!foundUser) {
             throw new ApiError(401, "Invalid refresh token: User not found");
         }
 
+        // check if the incoming refresh token matches the one stored in the user document
         if (incomingClientRefreshToken !== foundUser.refreshToken) {
             throw new ApiError(
                 401,
@@ -221,9 +225,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             secure: true,
         };
 
+        // generate new access and refresh tokens for the user
         const { accessToken, refreshToken } =
-            await generateAccessAndRefereshTokens(foundUser._id);
+            await generateAccessAndRefreshTokens(foundUser._id);
 
+        // set cookies with the new tokens and send response
         res.status(200)
             .cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
@@ -231,11 +237,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
                 new ApiResponse(
                     200,
                     { accessToken, refreshToken },
-                    "accessToken generated successfully"
+                    "Access token refreshed successfully"
                 )
             );
     } catch (error) {
-        throw new ApiError(401, error?.message || "invalid refresh token");
+        throw new ApiError(401, error?.message || "Invalid refresh token");
     }
 });
 
