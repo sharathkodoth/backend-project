@@ -230,7 +230,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             await generateAccessAndRefreshTokens(foundUser._id);
 
         // set cookies with the new tokens and send response
-        res.status(200)
+        return res
+            .status(200)
             .cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
             .json(
@@ -245,4 +246,40 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changePassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+
+    // retrieving user from auth middleware
+    const user = await User.findById(req.user?._id);
+
+    // method from user model
+    const verifiedOldPassword = await user.isPasswordCorrect(oldPassword);
+
+    if (!verifiedOldPassword) {
+        throw new ApiError(400, "Incorrect old password");
+    }
+
+    user.password = newPassword;
+
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "password changed successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(new ApiResponse(200, req.user, "User fetched successfully"));
+});
+
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changePassword,
+    getCurrentUser,
+};
