@@ -326,10 +326,9 @@ const changeAvatar = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(200, user, "avatar changed successfully")
-        );
+        .json(new ApiResponse(200, user, "avatar changed successfully"));
 });
+
 const changeCoverImage = asyncHandler(async (req, res) => {
     const coverImageLocalPath = req.file?.path;
 
@@ -355,13 +354,34 @@ const changeCoverImage = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                user,
-                "cover image changed successfully"
-            )
-        );
+        .json(new ApiResponse(200, user, "cover image changed successfully"));
+});
+
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+    const { username } = req.params;
+
+    if (!username?.trim()) {
+        throw new ApiError(400, "error");
+    }
+
+    await User.aggregate([
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers",
+            },
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo",
+            },
+        },
+    ]);
 });
 
 export {
@@ -374,4 +394,5 @@ export {
     changeAccountDetails,
     changeAvatar,
     changeCoverImage,
+    getUserChannelProfile
 };
