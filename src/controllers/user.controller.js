@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadFileOnCloudinary } from "../services/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -358,6 +359,7 @@ const changeCoverImage = asyncHandler(async (req, res) => {
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
+
     const { username } = req.params;
 
     if (!username?.trim()) {
@@ -423,6 +425,16 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, "User channel fetched successfully"));
 });
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+    const user = User.aggregate([
+        {
+            $match: {
+                _id: mongoose.Types.ObjectId(req.user._id)
+            }
+        }
+    ])
+})
 
 export {
     registerUser,
