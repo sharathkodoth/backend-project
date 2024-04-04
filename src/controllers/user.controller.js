@@ -364,8 +364,11 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         throw new ApiError(400, "error");
     }
 
-    await User.aggregate([
+    const channel = await User.aggregate([
         {
+            $match: {
+                username: username?.toLowerCase(),
+            },
             $lookup: {
                 from: "subscriptions",
                 localField: "_id",
@@ -381,6 +384,35 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 as: "subscribedTo",
             },
         },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: $subscribers,
+                },
+                subscribedToCount: {
+                    $size: $subscribedTo,
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: { $in: [req.user._id, "$subscribers.subscriber"] },
+                        then: true,
+                        else: false,
+                    },
+                },
+            },
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                email: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscribersCount: 1,
+                subscribersCount: 1,
+                isSubscribed: 1,
+            },
+        },
     ]);
 });
 
@@ -394,5 +426,5 @@ export {
     changeAccountDetails,
     changeAvatar,
     changeCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
 };
