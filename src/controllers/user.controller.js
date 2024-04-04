@@ -359,7 +359,6 @@ const changeCoverImage = asyncHandler(async (req, res) => {
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-
     const { username } = req.params;
 
     if (!username?.trim()) {
@@ -368,9 +367,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
     const channel = await User.aggregate([
         {
-            $match: {
-                username: username?.toLowerCase(),
-            },
+            $match: { username: username?.toLowerCase() },
+        },
+        {
+            // join the 'subscriptions' collection to fetch the subscribers for the current user
             $lookup: {
                 from: "subscriptions",
                 localField: "_id",
@@ -379,6 +379,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             },
         },
         {
+            // join the 'subscriptions' collection to fetch the channels the current user is subscribed to
             $lookup: {
                 from: "subscriptions",
                 localField: "_id",
@@ -387,14 +388,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             },
         },
         {
+            // add calculated fields to the output documents
             $addFields: {
-                subscribersCount: {
-                    $size: $subscribers,
-                },
-                subscribedToCount: {
-                    $size: $subscribedTo,
-                },
+                subscribersCount: { $size: "$subscribers" },
+                subscribedToCount: { $size: "$subscribedTo" },
                 isSubscribed: {
+                    // check if the current authenticated user (req.user._id) is in the 'subscribers' array
                     $cond: {
                         if: { $in: [req.user._id, "$subscribers.subscriber"] },
                         then: true,
@@ -404,6 +403,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             },
         },
         {
+            // project (select) the fields to include in the output
             $project: {
                 fullName: 1,
                 username: 1,
@@ -417,6 +417,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
     ]);
 
+    // check if the 'channel' array is empty
     if (!channel.length()) {
         throw new ApiError(404, "channel does not exist");
     }
@@ -430,11 +431,11 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     const user = User.aggregate([
         {
             $match: {
-                _id: mongoose.Types.ObjectId(req.user._id)
-            }
-        }
-    ])
-})
+                _id: mongoose.Types.ObjectId(req.user._id),
+            },
+        },
+    ]);
+});
 
 export {
     registerUser,
@@ -447,4 +448,5 @@ export {
     changeAvatar,
     changeCoverImage,
     getUserChannelProfile,
+    getWatchHistory,
 };
