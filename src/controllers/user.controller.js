@@ -424,7 +424,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, "User channel fetched successfully"));
+        .json(new ApiResponse(200,channel[0], "User channel fetched successfully"));
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {
