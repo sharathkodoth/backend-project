@@ -128,7 +128,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     // generate access token and refresh token
-    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
         user._id
     );
 
@@ -165,8 +165,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     const sharath = await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined, // this removes the field from document
+            $unset: {
+                refreshToken: 1, // this removes the field from document
             },
         },
         {

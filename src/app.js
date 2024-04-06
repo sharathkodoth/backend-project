@@ -18,6 +18,6 @@ app.use(cookieParser()); // middleware parses incoming cookies from client reque
 
 import userRouter from "./routes/user.routes.js";
 
-app.use("/api/v1/users", userRouter)
+app.use("/api/v1/users", userRouter);
 
 export { app };
