@@ -65,8 +65,8 @@ const getVideoById = asyncHandler(async (req, res) => {
     }
 
     return res
-        .status(404)
-        .json(new ApiResponse(404, videoFound, "Found video successfully"));
+        .status(201)
+        .json(new ApiResponse(200, videoFound, "Found video successfully"));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
@@ -98,7 +98,6 @@ const updateVideo = asyncHandler(async (req, res) => {
 
     const { url: thumbnailUrl } = thumbnailUploadResult;
 
-    // Find and update the video document
     const updatedVideo = await Video.findByIdAndUpdate(
         videoId,
         {
@@ -111,14 +110,31 @@ const updateVideo = asyncHandler(async (req, res) => {
         { new: true, runValidators: true }
     );
 
-    // Check if the video was found and updated
     if (!updatedVideo) {
         throw new ApiError(404, "Video not found");
     }
 
     return res
         .status(200)
-        .json(new ApiResponse(200, updateVideo, "Video updated successfully"));
+        .json(new ApiResponse(200, updatedVideo, "Video updated successfully"));
 });
 
-export { getAllVideos, publishVideo, getVideoById, updateVideo };
+const deleteVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video ID");
+    }
+
+    const deletedVideo = await Video.findByIdAndDelete(videoId, { new: true });
+
+    if (!deletedVideo) {
+        throw new ApiError(500, "Video not deleted, try again");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, deleteVideo, "video deleted successfully"));
+});
+
+export { getAllVideos, publishVideo, getVideoById, updateVideo, deleteVideo };
