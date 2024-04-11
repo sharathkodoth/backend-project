@@ -71,7 +71,54 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
-    
+    const { title, description } = req.body;
+
+    // Validate input
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video ID");
+    }
+
+    if (!title || !description) {
+        throw new ApiError(400, "Title and description are required");
+    }
+
+    const thumbnailFileLocalPath = req.file?.path;
+
+    if (!thumbnailFileLocalPath) {
+        throw new ApiError(400, "Thumbnail is required");
+    }
+
+    const thumbnailUploadResult = await uploadFileOnCloudinary(
+        thumbnailFileLocalPath
+    );
+
+    if (!thumbnailUploadResult) {
+        throw new ApiError(500, "Thumbnail upload failed, please try again");
+    }
+
+    const { url: thumbnailUrl } = thumbnailUploadResult;
+
+    // Find and update the video document
+    const updatedVideo = await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set: {
+                thumbnail: thumbnailUrl,
+                title,
+                description,
+            },
+        },
+        { new: true, runValidators: true }
+    );
+
+    // Check if the video was found and updated
+    if (!updatedVideo) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updateVideo, "Video updated successfully"));
 });
 
-export { getAllVideos, publishVideo, getVideoById };
+export { getAllVideos, publishVideo, getVideoById, updateVideo };
