@@ -58,8 +58,6 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImageLocalPath = req.files.coverImage[0].path;
     }
 
-    console.log(req.files);
-
     // check if avatar is uploaded
     if (!avatarLocalPath) {
         throw new ApiError(400, "avatar is required");
@@ -173,7 +171,6 @@ const logoutUser = asyncHandler(async (req, res) => {
             new: true,
         }
     );
-    console.log(sharath);
 
     const options = {
         httpOnly: true,
@@ -312,7 +309,7 @@ const changeAvatar = asyncHandler(async (req, res) => {
     const avatar = await uploadFileOnCloudinary(avatarLocalPath);
 
     if (!avatar.url) {
-        throw new ApiError(400, "error while uploading avatar");
+        throw new ApiError(500, "error while uploading avatar");
     }
 
     const user = await User.findByIdAndUpdate(
