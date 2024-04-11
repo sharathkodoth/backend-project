@@ -4,6 +4,7 @@ import { uploadFileOnCloudinary } from "../services/cloudinary.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const getAllVideos = asyncHandler(async (req, res) => {});
 
@@ -52,4 +53,25 @@ const publishVideo = asyncHandler(async (req, res) => {
         .json(new ApiResponse(201, video, "Video published successfully"));
 });
 
-export { getAllVideos, publishVideo };
+const getVideoById = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+
+    if (!isValidObjectId(videoId)) throw new ApiError(400, "video not found");
+
+    const videoFound = await Video.findById(videoId);
+
+    if (!videoFound) {
+        throw new ApiError(400, "Video not found");
+    }
+
+    return res
+        .status(404)
+        .json(new ApiResponse(404, videoFound, "Found video successfully"));
+});
+
+const updateVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    
+});
+
+export { getAllVideos, publishVideo, getVideoById };
