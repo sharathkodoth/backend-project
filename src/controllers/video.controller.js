@@ -46,6 +46,7 @@ const publishVideo = asyncHandler(async (req, res) => {
         description,
         duration: videoDuration,
         owner: userId,
+        isPublished: false,
     });
 
     return res
@@ -137,4 +138,47 @@ const deleteVideo = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, deleteVideo, "video deleted successfully"));
 });
 
-export { getAllVideos, publishVideo, getVideoById, updateVideo, deleteVideo };
+const togglePublishStatus = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "invalid id");
+    }
+
+    const publishStatus = await Video.findByIdAndUpdate(
+        videoId,
+        [
+            {
+                $set: {
+                    publishStatus: {
+                        $cond: [
+                            { $not: "$publishStatus" }, // negates the current value of publishStatus
+                            true, // if condition is true (publishStatus is false), set to true
+                            false, // if condition is false (publishStatus is true), set to false
+                        ],
+                    },
+                },
+            },
+        ],
+        { new: true }
+    );
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                publishStatus,
+                "changed publish status successfully"
+            )
+        );
+});
+
+export {
+    getAllVideos,
+    publishVideo,
+    getVideoById,
+    updateVideo,
+    deleteVideo,
+    togglePublishStatus,
+};
