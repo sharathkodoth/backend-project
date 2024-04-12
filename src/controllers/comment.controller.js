@@ -39,6 +39,35 @@ const getVideoComments = asyncHandler(async (req, res) => {
         );
 });
 
+const addComment = asyncHandler(async (req, res) => {
+    const { content } = req.body;
+    const { videoId } = req.params;
 
+    if (!content.trim()) {
+        throw new ApiError(
+            400,
+            "Comment field is required and cannot be blank"
+        );
+    }
+
+    const owner = req.user?._id;
+
+    const newComment = await Comment.create({
+        content,
+        video: videoId,
+        owner,
+    });
+
+    if (!newComment) {
+        throw new ApiError(
+            400,
+            "Failed to create comment. Please check your input and try again."
+        );
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, newComment, "comment added"));
+});
 
 export { getVideoComments, addComment };
