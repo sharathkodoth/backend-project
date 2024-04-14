@@ -70,4 +70,10 @@ const addComment = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, newComment, "comment added"));
 });
 
+const updateComment = asyncHandler(async (req, res) => {
+    const { content } = req.body;
+
+    
+});
+
 export { getVideoComments, addComment };
