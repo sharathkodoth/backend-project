@@ -145,14 +145,14 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         throw new ApiError(400, "invalid id");
     }
 
-    const publishStatus = await Video.findByIdAndUpdate(
+    const isPublished = await Video.findByIdAndUpdate(
         videoId,
         [
             {
                 $set: {
-                    publishStatus: {
+                    isPublished: {
                         $cond: [
-                            { $not: "$publishStatus" }, // negates the current value of publishStatus
+                            { $not: "$isPublished" }, // negates the current value of publishStatus
                             true, // if condition is true (publishStatus is false), set to true
                             false, // if condition is false (publishStatus is true), set to false
                         ],
@@ -168,7 +168,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                publishStatus,
+                isPublished,
                 "changed publish status successfully"
             )
         );
