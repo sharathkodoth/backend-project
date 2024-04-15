@@ -74,7 +74,12 @@ const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { title, description } = req.body;
 
-    // Validate input
+    const video = await Video.findById(videoId);
+
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not owner of this video");
+    }
+
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID");
     }
@@ -123,6 +128,12 @@ const updateVideo = asyncHandler(async (req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
 
+    const video = await Video.findById(videoId);
+
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not owner of this video");
+    }
+
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID");
     }
@@ -140,6 +151,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
+
+    const video = await Video.findById(videoId);
+
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not owner of this video");
+    }
 
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "invalid id");
