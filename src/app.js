@@ -18,10 +18,12 @@ app.use(cookieParser()); // middleware parses incoming cookies from client reque
 
 import userRouter from "./routes/user.routes.js";
 import videosRouter from "./routes/video.routes.js";
-import commentsRouter from "./routes/comment.routes.js"
+import commentsRouter from "./routes/comment.routes.js";
+import likesRouter from "./routes/like.routes.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/videos", videosRouter);
-app.use("/api/v1/comments", commentsRouter)
+app.use("/api/v1/comments", commentsRouter);
+app.use("/api/v1/likes", likesRouter);
 
 export { app };
