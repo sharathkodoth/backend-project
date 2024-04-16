@@ -8,32 +8,40 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
 
     if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, "Invalid ID");
+        throw new ApiError(400, "Invalid video ID");
     }
 
+    if (!req.user || !req.user._id) {
+        throw new ApiError(401, "User not authenticated");
+    }
+
+    const userId = req.user._id;
+
+    // check if the user has already liked the video
     const likedVideoAlready = await Like.findOne({
         video: videoId,
-        likedBy: req.user?._id,
+        likedBy: userId,
     });
 
     if (likedVideoAlready) {
-        await Like.findByIdAndDelete(likedVideoAlready?._id);
+        // if the user has already liked the video, remove the like
+        await Like.findByIdAndDelete(likedVideoAlready._id);
+        return res.status(200).json(new ApiResponse(200, "Video like removed"));
+    } else {
+        // if the user hasn't liked the video, create a new like
+        const likedVideo = await Like.create({
+            video: videoId,
+            likedBy: userId,
+        });
 
-        return res.status(200).json(new ApiResponse(200, "removed like"));
+        if (!likedVideo) {
+            throw new ApiError(500, "Unable to like the video,try again");
+        }
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, likedVideo, "Video liked successfully"));
     }
-
-    const likedVideo = await Like.create({
-        video: videoId,
-        likedBy: req.user._id,
-    });
-
-    if (!likedVideo) {
-        throw new ApiError(400, "Unable to like, try again");
-    }
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, likedVideo, "Liked Video Successfully"));
 });
 
 export { toggleVideoLike };
