@@ -4,9 +4,22 @@ import { uploadFileOnCloudinary } from "../services/cloudinary.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
-const getAllVideos = asyncHandler(async (req, res) => {});
+const getAllVideos = asyncHandler(async (req, res) => {
+    const {
+        page = 1,
+        limit = 10,
+        query,
+        sortBy,
+        sortType,
+        userId,
+    } = req.query;
+
+    
+
+    
+});
 
 const publishVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body;
@@ -59,15 +72,37 @@ const getVideoById = asyncHandler(async (req, res) => {
 
     if (!isValidObjectId(videoId)) throw new ApiError(400, "video not found");
 
-    const videoFound = await Video.findById(videoId);
+    const video = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+        {
+            $lookup: {
+                from: "comments",
+                localField: "_id",
+                foreignField: "video",
+                as: "comments"
+            }
+        }
+    ]);
 
-    if (!videoFound) {
+    if (!video) {
         throw new ApiError(400, "Video not found");
     }
 
     return res
         .status(201)
-        .json(new ApiResponse(200, videoFound, "Found video successfully"));
+        .json(new ApiResponse(200, video, "Found video successfully"));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
