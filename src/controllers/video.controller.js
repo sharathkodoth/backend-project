@@ -7,18 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose, { isValidObjectId } from "mongoose";
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const {
-        page = 1,
-        limit = 10,
-        query,
-        sortBy,
-        sortType,
-        userId,
-    } = req.query;
-
-    
-
-    
+    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
 });
 
 const publishVideo = asyncHandler(async (req, res) => {
@@ -75,30 +64,86 @@ const getVideoById = asyncHandler(async (req, res) => {
     const video = await Video.aggregate([
         {
             $match: {
-                _id: new mongoose.Types.ObjectId(videoId)
-            }
+                _id: new mongoose.Types.ObjectId(videoId),
+            },
         },
         {
             $lookup: {
                 from: "likes",
                 localField: "_id",
                 foreignField: "video",
-                as: "likes"
-            }
+                as: "likes",
+            },
+        },
+        {
+            $addFields: {
+                likedByCurrentUser: {
+                    $cond: {
+                        if: { $in: [req.user._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false,
+                    },
+                },
+            },
         },
         {
             $lookup: {
                 from: "comments",
                 localField: "_id",
                 foreignField: "video",
-                as: "comments"
-            }
-        }
+                as: "comments",
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            _id: 1,
+                            avatar: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        { $unwind: "$owner" },
+        {
+            $addFields: {
+                likesCount: {
+                    $size: "$likes",
+                },
+                commentsCount: {
+                    $size: "$comments",
+                },
+            },
+        },
     ]);
 
     if (!video) {
         throw new ApiError(400, "Video not found");
     }
+    // increment the views field by 1
+    await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $inc: { views: 1 },
+        },
+        { new: true }
+    );
+
+    // adds this video to user watchHistory
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $addToSet: { watchHistory: videoId },
+        },
+        { new: true }
+    );
 
     return res
         .status(201)
