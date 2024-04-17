@@ -364,7 +364,9 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
     const channel = await User.aggregate([
         {
-            $match: { username: username?.toLowerCase() },
+            $match: {
+                username: username?.toLowerCase(),
+            },
         },
         {
             // join the 'subscriptions' collection to fetch the subscribers for the current user
@@ -421,7 +423,13 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200,channel[0], "User channel fetched successfully"));
+        .json(
+            new ApiResponse(
+                200,
+                channel[0],
+                "User channel fetched successfully"
+            )
+        );
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {
