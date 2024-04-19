@@ -40,8 +40,94 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
         return res
             .status(200)
-            .json(new ApiResponse(200, likedVideo, "Video liked successfully"));
+            .json(new ApiResponse(200, likedVideo, "Liked Video successfully"));
     }
 });
 
-export { toggleVideoLike };
+const toggleCommentLike = asyncHandler(async (req, res) => {
+    const { commentId } = req.params;
+
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, "Invalid comment ID");
+    }
+
+    if (!req.user || !req.user._id) {
+        throw new ApiError(401, "User not authenticated");
+    }
+
+    const userId = req.user._id;
+
+    const likedCommentAlready = await Like.findOne({
+        comment: commentId,
+        likedBy: userId,
+    });
+
+    if (likedCommentAlready) {
+        await Like.findByIdAndDelete(likedCommentAlready._id);
+        return res.status(200).json(new ApiResponse(200, null, "removed like"));
+    } else {
+        const likedComment = await Like.create({
+            comment: commentId,
+            likedBy: userId,
+        });
+
+        if (!likedComment) {
+            throw new ApiError(500, "Unable to like the comment,try again");
+        }
+
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, likedComment, "Liked comment successfully")
+            );
+    }
+});
+
+const toggleCommunityPostLike = asyncHandler(async (req, res) => {
+    const { communityPostId } = req.params;
+
+    if (!isValidObjectId(communityPostId)) {
+        throw new ApiError(400, "Invalid ID");
+    }
+
+    if (!req.user || !req.user._id) {
+        throw new ApiError(401, "User not authenticated");
+    }
+
+    const user = req.user._id;
+
+    const likedCommunityPostAlready = await Like.findOne({
+        communityPost: communityPostId,
+        likedBy: user,
+    });
+
+    if (likedCommunityPostAlready) {
+        await Like.findByIdAndDelete(likedCommunityPostAlready._id);
+        return res.status(200).json(new ApiResponse(200, null, "removed like"));
+    } else {
+        const likedCommunityPost = await Like.create({
+            communityPost: communityPostId,
+            likedBy: user,
+        });
+
+        if (!likedCommunityPost) {
+            throw new ApiError(400, "unable to like the post, try again");
+        }
+
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    likedCommunityPost,
+                    "Liked Post Successfully"
+                )
+            );
+    }
+});
+
+const getLikedVideos = asyncHandler(async (req, res) => {
+    
+});
+
+export { toggleVideoLike, toggleCommentLike, toggleCommunityPostLike };
