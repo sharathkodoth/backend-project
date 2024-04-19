@@ -23,6 +23,14 @@ const getVideoComments = asyncHandler(async (req, res) => {
         {
             $match: { video: new mongoose.Types.ObjectId(videoId) },
         },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "comment",
+                as: "likes"
+            }
+        },
         { $sort: { createdAt: -1 } },
         { $skip: skip },
         { $limit: limit },
