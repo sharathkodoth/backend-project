@@ -1,5 +1,7 @@
 import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
+import { Like } from "../models/like.model.js";
+import { Comment } from "../models/comment.model.js";
 import { uploadFileOnCloudinary } from "../services/cloudinary.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -223,10 +225,20 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if (!deletedVideo) {
         throw new ApiError(500, "Video not deleted, try again");
     }
+    
+    // delete likes of video
+    await Like.deleteMany({
+        video: videoId,
+    });
+
+    // delete comments
+    await Comment.deleteMany({
+        video: videoId,
+    });
 
     return res
         .status(200)
-        .json(new ApiResponse(200, deleteVideo, "video deleted successfully"));
+        .json(new ApiResponse(200, deletedVideo, "video deleted successfully"));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
