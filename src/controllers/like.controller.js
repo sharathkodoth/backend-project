@@ -1,4 +1,4 @@
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -127,7 +127,74 @@ const toggleCommunityPostLike = asyncHandler(async (req, res) => {
 });
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    
+    const user = req.user._id;
+
+    const likedVideos = await Like.aggregate([
+        {
+            $match: {
+                likedBy: new mongoose.Types.ObjectId(user),
+            },
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "video",
+                foreignField: "_id",
+                as: "likedVideos",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "ownerDetails",
+                        },
+                    },
+                    {
+                        $unwind: "$ownerDetails",
+                    },
+                ],
+            },
+        },
+        {
+            $unwind: "$likedVideos",
+        },
+        {
+            $sort: {
+                updatedAt: -1,
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                likedVideos: {
+                    _id: 1,
+                    owner: 1,
+                    videoFile: 1,
+                    thumbnail: 1,
+                    description: 1,
+                    duration: 1,
+                    views: 1,
+                    likes: 1,
+                    title: 1,
+                    createdAt: 1,
+                    ownerDetails: {
+                        avatar: 1,
+                        username: 1,
+                    },
+                },
+            },
+        },
+    ]);
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, likedVideos, "Liked Videos fetched"));
 });
 
-export { toggleVideoLike, toggleCommentLike, toggleCommunityPostLike };
+export {
+    toggleVideoLike,
+    toggleCommentLike,
+    toggleCommunityPostLike,
+    getLikedVideos,
+};
