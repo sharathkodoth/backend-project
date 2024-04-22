@@ -58,7 +58,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                 from: "users",
                 localField: "subscriber",
                 foreignField: "_id",
-                as: "subscribers",
+                as: "subscriber",
                 pipeline: [
                     {
                         $lookup: {
@@ -87,12 +87,12 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                 ],
             },
         },
-        { $unwind: "$subscribers" },
+        { $unwind: "$subscriber" },
 
         {
             $project: {
                 _id: 0,
-                subscribers: {
+                subscriber: {
                     _id: 1,
                     username: 1,
                     fullName: 1,
