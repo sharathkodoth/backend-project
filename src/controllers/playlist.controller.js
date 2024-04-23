@@ -29,13 +29,27 @@ const createPlaylist = asyncHandler(async (req, res) => {
 });
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
-    const { playlistId } = req.params;
+    const { userId } = req.params;
 
-    
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid ID");
+    }
+
+    const userPlaylists = await Playlist.find({
+        owner: userId,
+    });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, userPlaylists, "fetched successfully"));
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const { playlistId } = req.params;
+
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, "Invalid ID");
+    }
 });
 
-export { createPlaylist };
+export { createPlaylist, getUserPlaylists, getPlaylistById };
