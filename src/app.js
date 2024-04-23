@@ -21,11 +21,13 @@ import videosRouter from "./routes/video.routes.js";
 import commentsRouter from "./routes/comment.routes.js";
 import likesRouter from "./routes/like.routes.js";
 import subscriptionRouter from "./routes/subscription.routes.js";
+import playlistRouter from "./routes/playlist.routes.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/videos", videosRouter);
 app.use("/api/v1/comments", commentsRouter);
 app.use("/api/v1/likes", likesRouter);
 app.use("/api/v1/subscriptions", subscriptionRouter);
+app.use("/api/v1/playlist", playlistRouter);
 
 export { app };
