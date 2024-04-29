@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/authentication.middleware.js";
 import {
+    addVideoToPlaylist,
     createPlaylist,
     getUserPlaylists,
 } from "../controllers/playlist.controller.js";
@@ -10,5 +11,6 @@ router.use(verifyJWT);
 
 router.route("/").post(createPlaylist);
 router.route("/user/:userId").get(getUserPlaylists);
+router.route("/add/:videoId/:playlistId").patch(addVideoToPlaylist);
 
 export default router;
