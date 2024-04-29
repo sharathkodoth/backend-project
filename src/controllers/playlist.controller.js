@@ -93,10 +93,14 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
     const playlist = await Playlist.findById(playlistId);
 
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found");
+    }
+
     if (playlist.owner?.toString() !== req.user?._id.toString()) {
         throw new ApiError(
-            401,
-            "You must be the owner of playlist to add video"
+            403,
+            "You do not have permission to modify this playlist"
         );
     }
 
@@ -163,7 +167,17 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         );
 });
 
+const deletePlaylist = asyncHandler(async (req, res) => {
+    const {playlistId} = req.params;
 
+    if(!isValidObjectId(playlistId)){
+        throw new ApiError(400, "Invalid ID")
+    }
+
+    
+
+    return res .status(200) .json(new ApiResponse(200, null, "Deleted Playlist"))
+})
 
 export {
     createPlaylist,
