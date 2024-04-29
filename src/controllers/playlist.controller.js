@@ -51,13 +51,14 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         {
             $addFields: {
                 totalVideos: {
-                    $size: "$videos"
+                    $size: "$videos",
                 },
                 totalViews: {
-                    $sum: "$videos.views"
-                }
-            }
-        },{
+                    $sum: "$videos.views",
+                },
+            },
+        },
+        {
             $project: {
                 _id: 1,
                 name: 1,
@@ -65,9 +66,9 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
                 videos: 1,
                 totalVideos: 1,
                 totalViews: 1,
-                updatedAt: 1
-            }
-        }
+                updatedAt: 1,
+            },
+        },
     ]);
 
     return res
@@ -118,6 +119,50 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, updatedPlaylist, "added video to playlist"));
 });
 
+const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
+    const { playlistId, videoId } = req.params;
+
+    if (!isValidObjectId(playlistId) || !isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid ID");
+    }
+
+    const playlist = await Playlist.findById(playlistId);
+
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found");
+    }
+
+    if (playlist.owner?.toString() !== req.user?._id.toString()) {
+        throw new ApiError(
+            403,
+            "You do not have permission to modify this playlist"
+        );
+    }
+
+    const updatedPlaylist = await Playlist.findByIdAndUpdate(
+        playlistId,
+        {
+            $pull: {
+                videos: videoId,
+            },
+        },
+        { new: true }
+    );
+
+    if (!updatedPlaylist) {
+        throw new ApiError(
+            500,
+            "Unable to remove video from playlist, try again"
+        );
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, updatedPlaylist, "Video removed from playlist")
+        );
+});
+
 
 
 export {
@@ -125,4 +170,5 @@ export {
     getUserPlaylists,
     getPlaylistById,
     addVideoToPlaylist,
+    removeVideoFromPlaylist,
 };
