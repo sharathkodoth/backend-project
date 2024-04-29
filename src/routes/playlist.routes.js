@@ -3,6 +3,7 @@ import { verifyJWT } from "../middlewares/authentication.middleware.js";
 import {
     addVideoToPlaylist,
     createPlaylist,
+    deletePlaylist,
     getUserPlaylists,
     removeVideoFromPlaylist,
 } from "../controllers/playlist.controller.js";
@@ -14,5 +15,6 @@ router.route("/").post(createPlaylist);
 router.route("/user/:userId").get(getUserPlaylists);
 router.route("/add/:videoId/:playlistId").patch(addVideoToPlaylist);
 router.route("/remove/:videoId/:playlistId").patch(removeVideoFromPlaylist);
+router.route("/:playlistId").delete(deletePlaylist);
 
 export default router;
