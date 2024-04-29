@@ -50,12 +50,8 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-                totalVideos: {
-                    $size: "$videos",
-                },
-                totalViews: {
-                    $sum: "$videos.views",
-                },
+                totalVideos: { $size: "$videos" },
+                totalViews: { $sum: "$videos.views" },
             },
         },
         {
@@ -71,9 +67,19 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         },
     ]);
 
+    if (userPlaylists.length === 0) {
+        throw new ApiError(404, "No playlists found for the user");
+    }
+
     return res
         .status(200)
-        .json(new ApiResponse(200, userPlaylists, "fetched successfully"));
+        .json(
+            new ApiResponse(
+                200,
+                userPlaylists,
+                "Playlists fetched successfully"
+            )
+        );
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {
@@ -168,16 +174,30 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 });
 
 const deletePlaylist = asyncHandler(async (req, res) => {
-    const {playlistId} = req.params;
+    const { playlistId } = req.params;
 
-    if(!isValidObjectId(playlistId)){
-        throw new ApiError(400, "Invalid ID")
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, "Invalid ID");
+    }
+    const playlist = await Playlist.findById(playlistId);
+
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found");
     }
 
-    
+    if (playlist.owner?.toString() !== req.user?._id.toString()) {
+        throw new ApiError(
+            403,
+            "You do not have permission to modify this playlist"
+        );
+    }
+    console.log(playlist?._id);
+    console.log(playlistId);
 
-    return res .status(200) .json(new ApiResponse(200, null, "Deleted Playlist"))
-})
+    await Playlist.findByIdAndDelete(playlist?._id);
+
+    return res.status(200).json(new ApiResponse(200, null, "Deleted Playlist"));
+});
 
 export {
     createPlaylist,
@@ -185,4 +205,5 @@ export {
     getPlaylistById,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
+    deletePlaylist,
 };
