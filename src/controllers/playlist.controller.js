@@ -191,12 +191,58 @@ const deletePlaylist = asyncHandler(async (req, res) => {
             "You do not have permission to modify this playlist"
         );
     }
-    console.log(playlist?._id);
-    console.log(playlistId);
 
-    await Playlist.findByIdAndDelete(playlist?._id);
+    await Playlist.findByIdAndDelete(playlistId);
 
     return res.status(200).json(new ApiResponse(200, null, "Deleted Playlist"));
+});
+
+const updatePlaylist = asyncHandler(async (req, res) => {
+    const { name, description } = req.body;
+    const { playlistId } = req.params;
+
+    if (!name || name.trim().length === 0) {
+        throw new ApiError(400, "Name must be atleast one character");
+    }
+    if (!description || description.trim().length === 0) {
+        throw new ApiError(400, "Description must be atleast one character");
+    }
+
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, "Invalid ID");
+    }
+
+    const playlist = await Playlist.findById(playlistId);
+
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found");
+    }
+
+    if (playlist.owner?.toString() !== req.user?._id.toString()) {
+        throw new ApiError(
+            403,
+            "You do not have permission to modify this playlist"
+        );
+    }
+
+    const updatedPlaylist = await Playlist.findByIdAndUpdate(
+        playlistId,
+        {
+            $set: {
+                name,
+                description,
+            },
+        },
+        { new: true }
+    );
+
+    if(!updatePlaylist){
+        throw new ApiError(500, "Internal Server Error, try again")
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updatedPlaylist, "Updated Playlist"));
 });
 
 export {
@@ -206,4 +252,5 @@ export {
     addVideoToPlaylist,
     removeVideoFromPlaylist,
     deletePlaylist,
+    updatePlaylist,
 };
