@@ -236,8 +236,8 @@ const updatePlaylist = asyncHandler(async (req, res) => {
         { new: true }
     );
 
-    if(!updatePlaylist){
-        throw new ApiError(500, "Internal Server Error, try again")
+    if (!updatePlaylist) {
+        throw new ApiError(500, "Internal Server Error, try again");
     }
 
     return res
