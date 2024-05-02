@@ -88,6 +88,83 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     if (!isValidObjectId(playlistId)) {
         throw new ApiError(400, "Invalid ID");
     }
+
+    const playlist = await Playlist.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(playlistId),
+            },
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "videos",
+                foreignField: "_id",
+                as: "videos",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                        },
+                    },
+                    { $unwind: "$owner" },
+                ],
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+            },
+        },
+        {
+            $addFields: {
+                totalVideos: { $size: "$videos" },
+                totalViews: { $sum: "$videos.views" },
+            },
+        },
+        { $unwind: "$videos" },
+        { $unwind: "$owner" },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                description: 1,
+                owner: {
+                    fullName: 1,
+                    avatar: 1,
+                    username: 1,
+                },
+                videos: {
+                    _id: 1,
+                    videoFile: 1,
+                    thumbnail: 1,
+                    title: 1,
+                    duration: 1,
+                    views: 1,
+                    createdAt: 1,
+                    owner: {
+                        _id: 1,
+                        avatar: 1,
+                        fullName: 1,
+                    },
+                },
+                totalVideos: 1,
+                totalViews: 1,
+                createdAt: 1,
+                updatedAt: 1,
+            },
+        },
+    ]);
+
+    return res
+        .status(200)
+        .json(new ApiResponse(201, playlist, "Fetched Playlist"));
 });
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
