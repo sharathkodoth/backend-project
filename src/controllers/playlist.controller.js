@@ -162,6 +162,10 @@ const getPlaylistById = asyncHandler(async (req, res) => {
         },
     ]);
 
+    if (!playlist) {
+        throw new ApiError(500, "Internal Server Error, try again");
+    }
+
     return res
         .status(200)
         .json(new ApiResponse(201, playlist, "Fetched Playlist"));
